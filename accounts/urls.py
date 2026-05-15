@@ -11,6 +11,9 @@ urlpatterns = [
     path('auth/register/', views.RegisterView.as_view(), name='register'),
     path('users/', views.UserListView.as_view(), name='user-list'),
     path('users/<int:pk>/', views.UserDetailView.as_view(), name='user-detail'),
+    path('push/vapid-key/', views.PushVapidKeyView.as_view()),
+    path('push/subscribe/', views.PushSubscribeView.as_view()),
+    path('push/unsubscribe/', views.PushUnsubscribeView.as_view()),
     path('companies/', views.CompanyListView.as_view(), name='company-list'),
     path('companies/<int:pk>/', views.CompanyDetailView.as_view(), name='company-detail'),
 ]

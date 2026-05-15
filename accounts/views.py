@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 
-from .models import User, Company
+from .models import User, Company, PushSubscription
 from .serializers import UserSerializer, UserCreateSerializer, CompanySerializer, LoginSerializer, ChangePasswordSerializer
 from .permissions import IsAdmin
 
@@ -74,6 +74,40 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
     permission_classes = [IsAuthenticated, IsAdmin]
     queryset = User.objects.all()
     serializer_class = UserSerializer
+
+
+class PushVapidKeyView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from django.conf import settings
+        return Response({'public_key': getattr(settings, 'VAPID_PUBLIC_KEY', '')})
+
+
+class PushSubscribeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        endpoint = request.data.get('endpoint')
+        p256dh   = request.data.get('p256dh')
+        auth     = request.data.get('auth')
+        if not all([endpoint, p256dh, auth]):
+            return Response({'error': 'Missing fields'}, status=status.HTTP_400_BAD_REQUEST)
+        PushSubscription.objects.update_or_create(
+            user=request.user, endpoint=endpoint,
+            defaults={'p256dh': p256dh, 'auth': auth},
+        )
+        return Response({'status': 'ok'})
+
+
+class PushUnsubscribeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        endpoint = request.data.get('endpoint')
+        if endpoint:
+            PushSubscription.objects.filter(user=request.user, endpoint=endpoint).delete()
+        return Response({'status': 'ok'})
 
 
 class CompanyListView(generics.ListCreateAPIView):

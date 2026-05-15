@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { NavLink, Link, useNavigate } from 'react-router-dom';
+import { NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getNotifications, markAllRead } from '../api/notifications';
 import Logo from './Logo';
@@ -32,8 +32,10 @@ function timeAgo(iso) {
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [notifs, setNotifs] = useState([]);
   const [open, setOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const wrapperRef = useRef(null);
 
   const unreadCount = notifs.filter(n => !n.is_read).length;
@@ -52,6 +54,9 @@ export default function Navbar() {
     const interval = setInterval(fetchNotifs, 30000);
     return () => clearInterval(interval);
   }, []);
+
+  // close mobile menu on route change
+  useEffect(() => { setMobileOpen(false); }, [location.pathname]);
 
   // close dropdown on outside click
   useEffect(() => {
@@ -106,6 +111,41 @@ export default function Navbar() {
           </NavLink>
         ))}
       </nav>
+
+      {/* Mobile hamburger */}
+      <button
+        className={styles.hamburger}
+        onClick={() => setMobileOpen(o => !o)}
+        aria-label="Menu"
+      >
+        <span className={`${styles.bar} ${mobileOpen ? styles.barOpen1 : ''}`} />
+        <span className={`${styles.bar} ${mobileOpen ? styles.barOpen2 : ''}`} />
+        <span className={`${styles.bar} ${mobileOpen ? styles.barOpen3 : ''}`} />
+      </button>
+
+      {/* Mobile menu overlay */}
+      {mobileOpen && (
+        <div className={styles.mobileMenu}>
+          <nav className={styles.mobileNav}>
+            {visibleItems.map(item => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) =>
+                  isActive ? `${styles.mobileLink} ${styles.mobileLinkActive}` : styles.mobileLink
+                }
+              >
+                {item.label}
+              </NavLink>
+            ))}
+          </nav>
+          <div className={styles.mobileDivider} />
+          <Link to="/profile" className={styles.mobileLink} onClick={() => setMobileOpen(false)}>
+            My Profile
+          </Link>
+          <button className={styles.mobileLogout} onClick={logout}>Sign out</button>
+        </div>
+      )}
 
       {/* Notification bell */}
       <div className={styles.notifWrapper} ref={wrapperRef}>

@@ -1,9 +1,12 @@
 from .models import Notification
+from accounts.push import send_push_to_user
 
 
 def _notify(user, title, body='', ticket=None):
     if user:
         Notification.objects.create(user=user, title=title, body=body, ticket=ticket)
+        url = f'/tickets/{ticket.id}' if ticket else '/'
+        send_push_to_user(user, title, body, url)
 
 
 def on_ticket_assigned(ticket, actor):

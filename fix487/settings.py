@@ -113,6 +113,10 @@ REST_FRAMEWORK = {
     ),
 }
 
+VAPID_PRIVATE_KEY   = os.environ.get('VAPID_PRIVATE_KEY', '')
+VAPID_PUBLIC_KEY    = os.environ.get('VAPID_PUBLIC_KEY', '')
+VAPID_CLAIMS_EMAIL  = os.environ.get('VAPID_CLAIMS_EMAIL', 'admin@fix487.com')
+
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=8),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
