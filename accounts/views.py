@@ -52,8 +52,11 @@ class RegisterView(generics.CreateAPIView):
 
 class UserListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated, IsAdmin]
-    queryset = User.objects.all()
     serializer_class = UserSerializer
+    filterset_fields = ['role']
+
+    def get_queryset(self):
+        return User.objects.all()
 
 
 class UserDetailView(generics.RetrieveUpdateAPIView):

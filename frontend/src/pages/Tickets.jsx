@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getTickets, createTicket, getCategories } from '../api/tickets';
 import { getCompanies } from '../api/companies';
@@ -26,6 +27,7 @@ const EMPTY_FORM = { title: '', description: '', priority: 'medium', category: '
 
 export default function Tickets() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -136,7 +138,7 @@ export default function Tickets() {
             </thead>
             <tbody>
               {tickets.map(t => (
-                <tr key={t.id}>
+                <tr key={t.id} className={styles.clickable} onClick={() => navigate(`/tickets/${t.id}`)}>
                   <td className={styles.id}>#{t.id}</td>
                   <td className={styles.ticketTitle}>{t.title}</td>
                   <td><StatusBadge status={t.status} /></td>

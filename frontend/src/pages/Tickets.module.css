@@ -26,6 +26,7 @@
 .table tr:last-child td { border-bottom: none; }
 .table tbody tr:hover { background: var(--color-bg); }
 
+.clickable { cursor: pointer; }
 .id { font-weight: 600; color: var(--color-text-muted); white-space: nowrap; }
 .ticketTitle { font-weight: 500; max-width: 280px; }
 .unassigned { color: var(--color-text-muted); font-style: italic; }
