@@ -5,6 +5,8 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Tickets from './pages/Tickets';
 import TicketDetail from './pages/TicketDetail';
+import Knowledge from './pages/Knowledge';
+import KBArticle from './pages/KBArticle';
 
 function Spinner() {
   return (
@@ -42,6 +44,8 @@ export default function App() {
         <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
         <Route path="/tickets" element={<RequireAuth><Tickets /></RequireAuth>} />
         <Route path="/tickets/:id" element={<RequireAuth><TicketDetail /></RequireAuth>} />
+        <Route path="/knowledge" element={<RequireAuth><Knowledge /></RequireAuth>} />
+        <Route path="/knowledge/:id" element={<RequireAuth><KBArticle /></RequireAuth>} />
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
