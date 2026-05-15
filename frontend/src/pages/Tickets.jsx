@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getTickets, createTicket, getCategories } from '../api/tickets';
+import { getTickets, createTicket, getCategories, exportTickets } from '../api/tickets';
 import { getCompanies } from '../api/companies';
 import styles from './Tickets.module.css';
 
@@ -77,6 +77,7 @@ export default function Tickets() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [exporting, setExporting] = useState(false);
 
   const canCreate = ['admin', 'dispatcher', 'client'].includes(user?.role);
 
@@ -134,6 +135,27 @@ export default function Tickets() {
     }
   };
 
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const params = {};
+      if (search) params.search = search;
+      if (priorityFilter) params.priority = priorityFilter;
+      const extra = STATUS_FILTER_EXTRAS[statusFilter];
+      if (extra) Object.assign(params, extra.param);
+      else if (statusFilter) params.status = statusFilter;
+      const { data } = await exportTickets(params);
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `tickets_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className={styles.page}>
       <div className={styles.header}>
@@ -141,9 +163,14 @@ export default function Tickets() {
           <h1 className={styles.title}>Tickets</h1>
           <p className={styles.subtitle}>{totalCount} ticket{totalCount !== 1 ? 's' : ''}</p>
         </div>
-        {canCreate && (
-          <button className={styles.btnPrimary} onClick={() => setShowModal(true)}>+ New Ticket</button>
-        )}
+        <div className={styles.headerActions}>
+          <button className={styles.btnExport} onClick={handleExport} disabled={exporting}>
+            {exporting ? 'Exporting…' : '↓ Export Excel'}
+          </button>
+          {canCreate && (
+            <button className={styles.btnPrimary} onClick={() => setShowModal(true)}>+ New Ticket</button>
+          )}
+        </div>
       </div>
 
       <div className={styles.filters}>

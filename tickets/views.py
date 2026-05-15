@@ -1,3 +1,6 @@
+import openpyxl
+from openpyxl.styles import Font, PatternFill, Alignment, Side, Border
+from django.http import HttpResponse
 from rest_framework import generics, filters
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -123,6 +126,90 @@ class TimeLogListCreateView(generics.ListCreateAPIView):
         ctx = super().get_serializer_context()
         ctx['ticket_id'] = self.kwargs['pk']
         return ctx
+
+
+class TicketExportView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_class = TicketFilter
+    search_fields = ['title', 'description']
+    ordering = ['-created_at']
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = Ticket.objects.select_related('company', 'assigned_to', 'created_by', 'category')
+        if user.role in ('admin', 'dispatcher'):
+            return qs
+        if user.role == 'technician':
+            return qs.filter(assigned_to=user)
+        if user.role == 'client':
+            return qs.filter(company=user.company)
+        return qs.none()
+
+    def get(self, request):
+        qs = self.filter_queryset(self.get_queryset())
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = 'Tickets'
+
+        headers = ['#', 'Title', 'Status', 'Priority', 'Category', 'Company',
+                   'Assigned To', 'Created By', 'Created At', 'Updated At',
+                   'SLA Breach', 'Due Date']
+        ws.append(headers)
+
+        header_fill = PatternFill('solid', fgColor='4F46E5')
+        header_font = Font(bold=True, color='FFFFFF')
+        thin = Side(style='thin', color='D1D5DB')
+        border = Border(bottom=thin)
+        for cell in ws[1]:
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = Alignment(horizontal='left', vertical='center')
+            cell.border = border
+
+        def name(user_obj):
+            if not user_obj:
+                return ''
+            n = f'{user_obj.first_name} {user_obj.last_name}'.strip()
+            return n or user_obj.username
+
+        def dt(value):
+            if not value:
+                return ''
+            return value.strftime('%Y-%m-%d %H:%M')
+
+        STATUS_MAP = {'new': 'New', 'assigned': 'Assigned', 'in_progress': 'In Progress',
+                      'on_hold': 'On Hold', 'resolved': 'Resolved', 'closed': 'Closed'}
+        PRIORITY_MAP = {'low': 'Low', 'medium': 'Medium', 'high': 'High', 'critical': 'Critical'}
+
+        for ticket in qs:
+            ws.append([
+                ticket.id,
+                ticket.title,
+                STATUS_MAP.get(ticket.status, ticket.status),
+                PRIORITY_MAP.get(ticket.priority, ticket.priority),
+                ticket.category.name if ticket.category else '',
+                ticket.company.name,
+                name(ticket.assigned_to),
+                name(ticket.created_by),
+                dt(ticket.created_at),
+                dt(ticket.updated_at),
+                'Yes' if ticket.sla_breach else 'No',
+                dt(ticket.due_date),
+            ])
+
+        col_widths = [6, 45, 12, 10, 16, 20, 22, 22, 17, 17, 10, 17]
+        for i, width in enumerate(col_widths, 1):
+            ws.column_dimensions[openpyxl.utils.get_column_letter(i)].width = width
+        ws.row_dimensions[1].height = 20
+
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = 'attachment; filename="tickets.xlsx"'
+        wb.save(response)
+        return response
 
 
 class NotificationListView(generics.ListAPIView):
