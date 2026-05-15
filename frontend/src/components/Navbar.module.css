@@ -256,4 +256,5 @@
   .hamburger { display: flex; }
   .mobileMenu { display: flex; }
   .navbar { position: relative; }
+  .notifPanel { width: calc(100vw - 32px); right: -8px; }
 }
