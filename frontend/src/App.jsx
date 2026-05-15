@@ -36,9 +36,8 @@ export default function App() {
             </RequireAuth>
           }
         />
-        <Route path="/dashboard/*" element={<RequireAuth><Dashboard /></RequireAuth>} />
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>
   );

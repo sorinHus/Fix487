@@ -1,12 +1,15 @@
 .root {
-  display: flex;
   min-height: 100vh;
   background: var(--color-bg);
+  display: flex;
+  flex-direction: column;
 }
 
 .main {
   flex: 1;
-  min-width: 0;
-  overflow-y: auto;
   padding: var(--space-8);
+  max-width: 1280px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
 }
