@@ -5,16 +5,16 @@ import styles from './Navbar.module.css';
 
 const NAV_ITEMS = [
   { label: 'Dashboard', to: '/dashboard', roles: ['admin', 'dispatcher', 'technician', 'client'] },
-  { label: 'Tichete', to: '/tickets', roles: ['admin', 'dispatcher', 'technician', 'client'] },
+  { label: 'Tickets', to: '/tickets', roles: ['admin', 'dispatcher', 'technician', 'client'] },
   { label: 'Knowledge Base', to: '/knowledge', roles: ['admin', 'dispatcher', 'technician'] },
-  { label: 'Rapoarte', to: '/reports', roles: ['admin', 'dispatcher'] },
-  { label: 'Utilizatori', to: '/users', roles: ['admin'] },
+  { label: 'Reports', to: '/reports', roles: ['admin', 'dispatcher'] },
+  { label: 'Users', to: '/users', roles: ['admin'] },
 ];
 
 const ROLE_LABELS = {
   admin: 'Administrator',
   dispatcher: 'Dispatcher',
-  technician: 'Tehnician',
+  technician: 'Technician',
   client: 'Client',
 };
 
@@ -59,7 +59,7 @@ export default function Navbar() {
           <span className={styles.userRole}>{ROLE_LABELS[user?.role] || user?.role}</span>
         </div>
         <div className={styles.avatar}>{initials}</div>
-        <button className={styles.logout} onClick={logout}>Ieșire</button>
+        <button className={styles.logout} onClick={logout}>Sign out</button>
       </div>
     </header>
   );

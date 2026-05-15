@@ -3,36 +3,36 @@ import styles from './Dashboard.module.css';
 
 const CARDS = {
   admin: [
-    { label: 'Tichete deschise', value: '—', accent: 'primary' },
-    { label: 'Neasignate', value: '—', accent: 'warning' },
-    { label: 'Rezolvate azi', value: '—', accent: 'success' },
-    { label: 'Tehnicieni activi', value: '—', accent: 'info' },
-    { label: 'Companii', value: '—', accent: 'secondary' },
-    { label: 'Articole KB', value: '—', accent: 'muted' },
+    { label: 'Open tickets', value: '—', accent: 'primary' },
+    { label: 'Unassigned', value: '—', accent: 'warning' },
+    { label: 'Resolved today', value: '—', accent: 'success' },
+    { label: 'Active technicians', value: '—', accent: 'info' },
+    { label: 'Companies', value: '—', accent: 'secondary' },
+    { label: 'KB articles', value: '—', accent: 'muted' },
   ],
   dispatcher: [
-    { label: 'Neasignate', value: '—', accent: 'warning' },
-    { label: 'În lucru', value: '—', accent: 'primary' },
-    { label: 'Rezolvate azi', value: '—', accent: 'success' },
-    { label: 'Tehnicieni disponibili', value: '—', accent: 'info' },
+    { label: 'Unassigned', value: '—', accent: 'warning' },
+    { label: 'In progress', value: '—', accent: 'primary' },
+    { label: 'Resolved today', value: '—', accent: 'success' },
+    { label: 'Available technicians', value: '—', accent: 'info' },
   ],
   technician: [
-    { label: 'Tichetele mele', value: '—', accent: 'primary' },
-    { label: 'Scadente azi', value: '—', accent: 'warning' },
-    { label: 'Întârziate', value: '—', accent: 'danger' },
-    { label: 'Rezolvate luna asta', value: '—', accent: 'success' },
+    { label: 'My tickets', value: '—', accent: 'primary' },
+    { label: 'Due today', value: '—', accent: 'warning' },
+    { label: 'Overdue', value: '—', accent: 'danger' },
+    { label: 'Resolved this month', value: '—', accent: 'success' },
   ],
   client: [
-    { label: 'Tichete deschise', value: '—', accent: 'primary' },
-    { label: 'În lucru', value: '—', accent: 'info' },
-    { label: 'Rezolvate', value: '—', accent: 'success' },
+    { label: 'Open tickets', value: '—', accent: 'primary' },
+    { label: 'In progress', value: '—', accent: 'info' },
+    { label: 'Resolved', value: '—', accent: 'success' },
   ],
 };
 
 const ROLE_LABELS = {
   admin: 'Administrator',
   dispatcher: 'Dispatcher',
-  technician: 'Tehnician',
+  technician: 'Technician',
   client: 'Client',
 };
 
@@ -44,7 +44,7 @@ export default function Dashboard() {
     <div className={styles.page}>
       <div className={styles.header}>
         <h1 className={styles.title}>
-          Bună ziua, {user?.first_name || user?.username}
+          Welcome, {user?.first_name || user?.username}
         </h1>
         <p className={styles.subtitle}>
           {ROLE_LABELS[user?.role]} · Fix487 Dashboard
