@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.utils import timezone
 from datetime import timedelta
-from .models import Ticket, Category, TicketComment, TimeLog
+from .models import Ticket, Category, TicketComment, TimeLog, Notification
 
 SLA_RESOLUTION_MAP = {
     'critical': 'sla_resolution_critical',
@@ -132,6 +132,12 @@ class TicketCommentSerializer(serializers.ModelSerializer):
         validated_data['author'] = self.context['request'].user
         validated_data['ticket_id'] = self.context['ticket_id']
         return super().create(validated_data)
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = ['id', 'title', 'body', 'ticket_id', 'is_read', 'created_at']
 
 
 class TimeLogSerializer(serializers.ModelSerializer):

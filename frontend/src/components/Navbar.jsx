@@ -1,15 +1,17 @@
-import { NavLink } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { getNotifications, markAllRead } from '../api/notifications';
 import Logo from './Logo';
 import styles from './Navbar.module.css';
 
 const NAV_ITEMS = [
-  { label: 'Dashboard', to: '/dashboard', roles: ['admin', 'dispatcher', 'technician', 'client'] },
-  { label: 'Tickets', to: '/tickets', roles: ['admin', 'dispatcher', 'technician', 'client'] },
+  { label: 'Dashboard',    to: '/dashboard', roles: ['admin', 'dispatcher', 'technician', 'client'] },
+  { label: 'Tickets',      to: '/tickets',   roles: ['admin', 'dispatcher', 'technician', 'client'] },
   { label: 'Knowledge Base', to: '/knowledge', roles: ['admin', 'dispatcher', 'technician'] },
-  { label: 'Reports', to: '/reports', roles: ['admin', 'dispatcher'] },
-  { label: 'Users', to: '/users', roles: ['admin'] },
-  { label: 'Companies', to: '/companies', roles: ['admin'] },
+  { label: 'Reports',      to: '/reports',   roles: ['admin', 'dispatcher'] },
+  { label: 'Users',        to: '/users',     roles: ['admin'] },
+  { label: 'Companies',    to: '/companies', roles: ['admin'] },
 ];
 
 const ROLE_LABELS = {
@@ -19,8 +21,61 @@ const ROLE_LABELS = {
   client: 'Client',
 };
 
+function timeAgo(iso) {
+  const diff = Math.floor((Date.now() - new Date(iso)) / 1000);
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
+}
+
 export default function Navbar() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [notifs, setNotifs] = useState([]);
+  const [open, setOpen] = useState(false);
+  const wrapperRef = useRef(null);
+
+  const unreadCount = notifs.filter(n => !n.is_read).length;
+
+  const fetchNotifs = async () => {
+    try {
+      const { data } = await getNotifications();
+      setNotifs(data);
+    } catch {
+      // silently ignore — auth may not be ready
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifs();
+    const interval = setInterval(fetchNotifs, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // close dropdown on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const handleBellClick = async () => {
+    if (!open && unreadCount > 0) {
+      await markAllRead();
+      setNotifs(prev => prev.map(n => ({ ...n, is_read: true })));
+    }
+    setOpen(o => !o);
+  };
+
+  const handleNotifClick = (n) => {
+    setOpen(false);
+    if (n.ticket_id) navigate(`/tickets/${n.ticket_id}`);
+  };
 
   const initials = user
     ? (
@@ -51,6 +106,52 @@ export default function Navbar() {
           </NavLink>
         ))}
       </nav>
+
+      {/* Notification bell */}
+      <div className={styles.notifWrapper} ref={wrapperRef}>
+        <button className={styles.bell} onClick={handleBellClick} aria-label="Notifications">
+          🔔
+          {unreadCount > 0 && (
+            <span className={styles.bellBadge}>{unreadCount > 9 ? '9+' : unreadCount}</span>
+          )}
+        </button>
+
+        {open && (
+          <div className={styles.notifPanel}>
+            <div className={styles.notifHeader}>
+              <span>Notifications</span>
+              {notifs.some(n => !n.is_read) && (
+                <button
+                  className={styles.markAllBtn}
+                  onClick={async () => {
+                    await markAllRead();
+                    setNotifs(prev => prev.map(n => ({ ...n, is_read: true })));
+                  }}
+                >
+                  Mark all read
+                </button>
+              )}
+            </div>
+            {notifs.length === 0 ? (
+              <p className={styles.notifEmpty}>No notifications yet.</p>
+            ) : (
+              <ul className={styles.notifList}>
+                {notifs.map(n => (
+                  <li
+                    key={n.id}
+                    className={`${styles.notifItem} ${!n.is_read ? styles.unread : ''}`}
+                    onClick={() => handleNotifClick(n)}
+                  >
+                    <span className={styles.notifTitle}>{n.title}</span>
+                    {n.body && <span className={styles.notifBody}>{n.body}</span>}
+                    <span className={styles.notifTime}>{timeAgo(n.created_at)}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+      </div>
 
       <div className={styles.user}>
         <div className={styles.userInfo}>

@@ -1,16 +1,19 @@
 from rest_framework import generics, filters
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 from django_filters.rest_framework import DjangoFilterBackend
 
-from .models import Ticket, Category, TicketActivity
+from .models import Ticket, Category, TicketActivity, Notification
 from .serializers import (
     TicketListSerializer, TicketDetailSerializer,
     TicketCreateSerializer, CategorySerializer,
     TicketCommentSerializer, TimeLogSerializer,
-    TicketActivitySerializer,
+    TicketActivitySerializer, NotificationSerializer,
 )
 from .filters import TicketFilter
 from . import activity as act
+from . import notifications as notif
 
 
 class CategoryListView(generics.ListAPIView):
@@ -69,6 +72,10 @@ class TicketDetailView(generics.RetrieveUpdateAPIView):
         instance = serializer.save()
         instance.refresh_from_db(fields=['assigned_to'])
         act.log_changes(instance, self.request.user, old_data)
+        if old_data['assigned_to_id'] != instance.assigned_to_id:
+            notif.on_ticket_assigned(instance, self.request.user)
+        if old_data['status'] != instance.status and instance.status == 'resolved':
+            notif.on_ticket_resolved(instance, self.request.user)
 
 
 class TicketActivityListView(generics.ListAPIView):
@@ -100,6 +107,7 @@ class TicketCommentListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         instance = serializer.save()
         act.log_comment(instance.ticket, self.request.user)
+        notif.on_comment_added(instance.ticket, self.request.user, instance.body)
 
 
 class TimeLogListCreateView(generics.ListCreateAPIView):
@@ -113,3 +121,25 @@ class TimeLogListCreateView(generics.ListCreateAPIView):
         ctx = super().get_serializer_context()
         ctx['ticket_id'] = self.kwargs['pk']
         return ctx
+
+
+class NotificationListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = NotificationSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        return (
+            Notification.objects
+            .filter(user=self.request.user)
+            .select_related('ticket')
+            .order_by('-created_at')[:20]
+        )
+
+
+class NotificationMarkAllReadView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
+        return Response({'status': 'ok'})

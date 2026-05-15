@@ -121,3 +121,18 @@ class TicketActivity(models.Model):
 
     def __str__(self):
         return f'{self.action} on #{self.ticket_id}'
+
+
+class Notification(models.Model):
+    user       = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
+    title      = models.CharField(max_length=200)
+    body       = models.CharField(max_length=500, blank=True)
+    ticket     = models.ForeignKey(Ticket, on_delete=models.CASCADE, null=True, blank=True, related_name='notifications')
+    is_read    = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'Notif for {self.user_id}: {self.title}'

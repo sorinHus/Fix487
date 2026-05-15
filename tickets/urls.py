@@ -8,4 +8,6 @@ urlpatterns = [
     path('tickets/<int:pk>/activity/', views.TicketActivityListView.as_view()),
     path('tickets/<int:pk>/comments/', views.TicketCommentListCreateView.as_view()),
     path('tickets/<int:pk>/timelogs/', views.TimeLogListCreateView.as_view()),
+    path('notifications/', views.NotificationListView.as_view()),
+    path('notifications/read-all/', views.NotificationMarkAllReadView.as_view()),
 ]
