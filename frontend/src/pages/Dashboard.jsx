@@ -15,31 +15,31 @@ function buildCards(role, data) {
   if (!data) return [];
   const map = {
     admin: [
-      { label: 'Open tickets',       value: data.open,               accent: 'primary',   to: '/tickets?status=new' },
-      { label: 'Unassigned',         value: data.unassigned,         accent: 'warning',   to: '/tickets' },
-      { label: 'Resolved today',     value: data.resolved_today,     accent: 'success',   to: '/tickets' },
-      { label: 'SLA breaches',       value: data.sla_breaches,       accent: 'danger',    to: '/tickets' },
-      { label: 'Active technicians', value: data.active_technicians, accent: 'info',      to: '/users' },
-      { label: 'Companies',          value: data.companies,          accent: 'secondary', to: '/users' },
+      { label: 'Open tickets',       value: data.open,               accent: 'primary',   to: '/tickets?is_open=true' },
+      { label: 'Unassigned',         value: data.unassigned,         accent: 'warning',   to: '/tickets?unassigned=true' },
+      { label: 'Resolved today',     value: data.resolved_today,     accent: 'success',   to: '/tickets?status=resolved' },
+      { label: 'SLA breaches',       value: data.sla_breaches,       accent: 'danger',    to: '/tickets?sla_breach=true' },
+      { label: 'Active technicians', value: data.active_technicians, accent: 'info',      to: '/users?role=technician' },
+      { label: 'Companies',          value: data.companies,          accent: 'secondary', to: '/companies' },
       { label: 'KB articles',        value: data.kb_articles,        accent: 'muted',     to: '/knowledge' },
     ],
     dispatcher: [
-      { label: 'Unassigned',         value: data.unassigned,         accent: 'warning',   to: '/tickets' },
-      { label: 'Open tickets',       value: data.open,               accent: 'primary',   to: '/tickets' },
-      { label: 'Resolved today',     value: data.resolved_today,     accent: 'success',   to: '/tickets' },
-      { label: 'SLA breaches',       value: data.sla_breaches,       accent: 'danger',    to: '/reports' },
-      { label: 'Active technicians', value: data.active_technicians, accent: 'info',      to: '/users' },
+      { label: 'Unassigned',         value: data.unassigned,         accent: 'warning',   to: '/tickets?unassigned=true' },
+      { label: 'Open tickets',       value: data.open,               accent: 'primary',   to: '/tickets?is_open=true' },
+      { label: 'Resolved today',     value: data.resolved_today,     accent: 'success',   to: '/tickets?status=resolved' },
+      { label: 'SLA breaches',       value: data.sla_breaches,       accent: 'danger',    to: '/tickets?sla_breach=true' },
+      { label: 'Active technicians', value: data.active_technicians, accent: 'info',      to: '/users?role=technician' },
     ],
     technician: [
-      { label: 'My tickets',         value: data.open,               accent: 'primary',   to: '/tickets' },
-      { label: 'Resolved today',     value: data.resolved_today,     accent: 'success',   to: '/tickets' },
-      { label: 'SLA breaches',       value: data.sla_breaches,       accent: 'danger',    to: '/tickets' },
+      { label: 'My tickets',         value: data.open,               accent: 'primary',   to: '/tickets?is_open=true' },
+      { label: 'Resolved today',     value: data.resolved_today,     accent: 'success',   to: '/tickets?status=resolved' },
+      { label: 'SLA breaches',       value: data.sla_breaches,       accent: 'danger',    to: '/tickets?sla_breach=true' },
       { label: 'Last 30 days',       value: data.last_30_days,       accent: 'info',      to: '/tickets' },
     ],
     client: [
-      { label: 'Open tickets',       value: data.open,               accent: 'primary',   to: '/tickets' },
-      { label: 'Resolved today',     value: data.resolved_today,     accent: 'success',   to: '/tickets' },
-      { label: 'SLA breaches',       value: data.sla_breaches,       accent: 'danger',    to: '/tickets' },
+      { label: 'Open tickets',       value: data.open,               accent: 'primary',   to: '/tickets?is_open=true' },
+      { label: 'Resolved today',     value: data.resolved_today,     accent: 'success',   to: '/tickets?status=resolved' },
+      { label: 'SLA breaches',       value: data.sla_breaches,       accent: 'danger',    to: '/tickets?sla_breach=true' },
     ],
   };
   return map[role] || [];

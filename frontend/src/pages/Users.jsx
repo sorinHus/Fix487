@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import api from '../api/axios';
 import { getCompanies } from '../api/companies';
 import styles from './Users.module.css';
@@ -13,10 +14,11 @@ function RoleBadge({ role }) {
 const EMPTY_FORM = { username: '', email: '', first_name: '', last_name: '', role: 'technician', company: '', phone: '', position: '', password: '' };
 
 export default function Users() {
+  const [searchParams] = useSearchParams();
   const [users, setUsers] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [roleFilter, setRoleFilter] = useState('');
+  const [roleFilter, setRoleFilter] = useState(() => searchParams.get('role') || '');
   const [search, setSearch] = useState('');
 
   const [modal, setModal] = useState(null); // null | 'create' | user object

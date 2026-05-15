@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getTickets, createTicket, getCategories } from '../api/tickets';
 import { getCompanies } from '../api/companies';
@@ -34,13 +34,26 @@ function SlaBadge({ hours, breach }) {
 
 const EMPTY_FORM = { title: '', description: '', priority: 'medium', category: '', company: '' };
 
+// Special synthetic values used in the status dropdown (not real API status values)
+const STATUS_FILTER_EXTRAS = {
+  __open:       { label: 'Open (all)',    param: { is_open: true } },
+  __unassigned: { label: 'Unassigned',   param: { unassigned: true } },
+  __breach:     { label: 'SLA breached', param: { sla_breach: true } },
+};
+
 export default function Tickets() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState(() => {
+    if (searchParams.get('is_open') === 'true') return '__open';
+    if (searchParams.get('unassigned') === 'true') return '__unassigned';
+    if (searchParams.get('sla_breach') === 'true') return '__breach';
+    return searchParams.get('status') || '';
+  });
   const [priorityFilter, setPriorityFilter] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [categories, setCategories] = useState([]);
@@ -56,8 +69,10 @@ export default function Tickets() {
     try {
       const params = {};
       if (search) params.search = search;
-      if (statusFilter) params.status = statusFilter;
       if (priorityFilter) params.priority = priorityFilter;
+      const extra = STATUS_FILTER_EXTRAS[statusFilter];
+      if (extra) Object.assign(params, extra.param);
+      else if (statusFilter) params.status = statusFilter;
       const { data } = await getTickets(params);
       setTickets(data);
     } finally {
@@ -118,6 +133,10 @@ export default function Tickets() {
         />
         <select className={styles.select} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
           <option value="">All statuses</option>
+          {Object.entries(STATUS_FILTER_EXTRAS).map(([v, cfg]) => (
+            <option key={v} value={v}>{cfg.label}</option>
+          ))}
+          <option disabled>──────────</option>
           {Object.entries(STATUS_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
         <select className={styles.select} value={priorityFilter} onChange={e => setPriorityFilter(e.target.value)}>

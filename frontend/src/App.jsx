@@ -9,6 +9,7 @@ import Knowledge from './pages/Knowledge';
 import KBArticle from './pages/KBArticle';
 import Reports from './pages/Reports';
 import Users from './pages/Users';
+import Companies from './pages/Companies';
 
 function Spinner() {
   return (
@@ -50,6 +51,7 @@ export default function App() {
         <Route path="/knowledge/:id" element={<RequireAuth><KBArticle /></RequireAuth>} />
         <Route path="/reports" element={<RequireAuth><Reports /></RequireAuth>} />
         <Route path="/users" element={<RequireAuth><Users /></RequireAuth>} />
+        <Route path="/companies" element={<RequireAuth><Companies /></RequireAuth>} />
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>

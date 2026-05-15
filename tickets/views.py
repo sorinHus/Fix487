@@ -9,6 +9,7 @@ from .serializers import (
     TicketCommentSerializer, TimeLogSerializer,
     TicketActivitySerializer,
 )
+from .filters import TicketFilter
 from . import activity as act
 
 
@@ -21,7 +22,7 @@ class CategoryListView(generics.ListAPIView):
 class TicketListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['status', 'priority', 'category']
+    filterset_class = TicketFilter
     search_fields = ['title', 'description']
     ordering_fields = ['created_at', 'updated_at', 'priority']
     ordering = ['-created_at']

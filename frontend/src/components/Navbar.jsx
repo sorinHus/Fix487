@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { label: 'Knowledge Base', to: '/knowledge', roles: ['admin', 'dispatcher', 'technician'] },
   { label: 'Reports', to: '/reports', roles: ['admin', 'dispatcher'] },
   { label: 'Users', to: '/users', roles: ['admin'] },
+  { label: 'Companies', to: '/companies', roles: ['admin'] },
 ];
 
 const ROLE_LABELS = {
