@@ -22,7 +22,10 @@ export default function Navbar() {
   const { user, logout } = useAuth();
 
   const initials = user
-    ? (`${user.first_name?.[0] || ''}${user.last_name?.[0] || ''}`.toUpperCase() || user.username[0].toUpperCase())
+    ? (
+        `${user.first_name?.[0] ?? ''}${user.last_name?.[0] ?? ''}`.toUpperCase() ||
+        (user.username?.[0] ?? '').toUpperCase()
+      )
     : '';
 
   const visibleItems = NAV_ITEMS.filter(item => item.roles.includes(user?.role));
