@@ -6,7 +6,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 
 from .models import User, Company
-from .serializers import UserSerializer, UserCreateSerializer, CompanySerializer, LoginSerializer
+from .serializers import UserSerializer, UserCreateSerializer, CompanySerializer, LoginSerializer, ChangePasswordSerializer
 from .permissions import IsAdmin
 
 
@@ -43,6 +43,17 @@ class MeView(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         return self.request.user
+
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        request.user.set_password(serializer.validated_data['new_password'])
+        request.user.save()
+        return Response({'status': 'ok'})
 
 
 class RegisterView(generics.CreateAPIView):

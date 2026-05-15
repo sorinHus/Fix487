@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getNotifications, markAllRead } from '../api/notifications';
 import Logo from './Logo';
@@ -154,13 +154,15 @@ export default function Navbar() {
       </div>
 
       <div className={styles.user}>
-        <div className={styles.userInfo}>
-          <span className={styles.userName}>
-            {user?.first_name ? `${user.first_name} ${user.last_name}` : user?.username}
-          </span>
-          <span className={styles.userRole}>{ROLE_LABELS[user?.role] || user?.role}</span>
-        </div>
-        <div className={styles.avatar}>{initials}</div>
+        <Link to="/profile" className={styles.userLink}>
+          <div className={styles.userInfo}>
+            <span className={styles.userName}>
+              {user?.first_name ? `${user.first_name} ${user.last_name}` : user?.username}
+            </span>
+            <span className={styles.userRole}>{ROLE_LABELS[user?.role] || user?.role}</span>
+          </div>
+          <div className={styles.avatar}>{initials}</div>
+        </Link>
         <button className={styles.logout} onClick={logout}>Sign out</button>
       </div>
     </header>
