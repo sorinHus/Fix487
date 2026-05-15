@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import Logo from '../components/Logo';
 import styles from './Login.module.css';
 
 export default function Login() {
@@ -39,7 +40,7 @@ export default function Login() {
     <div className={styles.page}>
       <div className={styles.card}>
         <div className={styles.logo}>
-          <div className={styles.logoIcon}>F</div>
+          <Logo size={40} />
           <span className={styles.logoText}>Fix487</span>
         </div>
 
