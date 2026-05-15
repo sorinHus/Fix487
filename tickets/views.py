@@ -12,6 +12,7 @@ from .serializers import (
     TicketActivitySerializer, NotificationSerializer,
 )
 from .filters import TicketFilter
+from .pagination import TicketPagination
 from . import activity as act
 from . import notifications as notif
 
@@ -24,6 +25,7 @@ class CategoryListView(generics.ListAPIView):
 
 class TicketListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
+    pagination_class = TicketPagination
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = TicketFilter
     search_fields = ['title', 'description']

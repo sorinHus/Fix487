@@ -34,6 +34,8 @@ function SlaBadge({ hours, breach }) {
 
 const EMPTY_FORM = { title: '', description: '', priority: 'medium', category: '', company: '' };
 
+const PAGE_SIZE = 25;
+
 // Special synthetic values used in the status dropdown (not real API status values)
 const STATUS_FILTER_EXTRAS = {
   __open:       { label: 'Open (all)',    param: { is_open: true } },
@@ -41,12 +43,26 @@ const STATUS_FILTER_EXTRAS = {
   __breach:     { label: 'SLA breached', param: { sla_breach: true } },
 };
 
+function getPageNumbers(current, total) {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const pages = [1];
+  if (current > 3) pages.push('…');
+  for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) pages.push(i);
+  if (current < total - 2) pages.push('…');
+  pages.push(total);
+  return pages;
+}
+
 export default function Tickets() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [totalCount, setTotalCount] = useState(0);
+  const [page, setPage] = useState(1);
+  const [hasNext, setHasNext] = useState(false);
+  const [hasPrev, setHasPrev] = useState(false);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState(() => {
     if (searchParams.get('is_open') === 'true') return '__open';
@@ -67,20 +83,26 @@ export default function Tickets() {
   const fetchTickets = useCallback(async () => {
     setLoading(true);
     try {
-      const params = {};
+      const params = { page };
       if (search) params.search = search;
       if (priorityFilter) params.priority = priorityFilter;
       const extra = STATUS_FILTER_EXTRAS[statusFilter];
       if (extra) Object.assign(params, extra.param);
       else if (statusFilter) params.status = statusFilter;
       const { data } = await getTickets(params);
-      setTickets(data);
+      setTickets(data.results);
+      setTotalCount(data.count);
+      setHasNext(!!data.next);
+      setHasPrev(!!data.previous);
     } finally {
       setLoading(false);
     }
-  }, [search, statusFilter, priorityFilter]);
+  }, [search, statusFilter, priorityFilter, page]);
 
   useEffect(() => { fetchTickets(); }, [fetchTickets]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => { setPage(1); }, [search, statusFilter, priorityFilter]);
 
   useEffect(() => {
     if (!showModal) return;
@@ -117,7 +139,7 @@ export default function Tickets() {
       <div className={styles.header}>
         <div>
           <h1 className={styles.title}>Tickets</h1>
-          <p className={styles.subtitle}>{tickets.length} ticket{tickets.length !== 1 ? 's' : ''}</p>
+          <p className={styles.subtitle}>{totalCount} ticket{totalCount !== 1 ? 's' : ''}</p>
         </div>
         {canCreate && (
           <button className={styles.btnPrimary} onClick={() => setShowModal(true)}>+ New Ticket</button>
@@ -183,6 +205,26 @@ export default function Tickets() {
           </table>
         )}
       </div>
+
+      {totalCount > PAGE_SIZE && (() => {
+        const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+        const from = (page - 1) * PAGE_SIZE + 1;
+        const to = Math.min(page * PAGE_SIZE, totalCount);
+        return (
+          <div className={styles.pagination}>
+            <span className={styles.pageInfo}>{from}–{to} of {totalCount}</span>
+            <div className={styles.pageControls}>
+              <button className={styles.pageBtn} onClick={() => setPage(p => p - 1)} disabled={!hasPrev}>← Prev</button>
+              {getPageNumbers(page, totalPages).map((p, i) =>
+                p === '…'
+                  ? <span key={`e${i}`} className={styles.ellipsis}>…</span>
+                  : <button key={p} className={`${styles.pageBtn} ${p === page ? styles.pageBtnActive : ''}`} onClick={() => setPage(p)}>{p}</button>
+              )}
+              <button className={styles.pageBtn} onClick={() => setPage(p => p + 1)} disabled={!hasNext}>Next →</button>
+            </div>
+          </div>
+        );
+      })()}
 
       {showModal && (
         <div className={styles.overlay} onClick={() => setShowModal(false)}>
