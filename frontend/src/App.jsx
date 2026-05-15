@@ -1,12 +1,13 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
+import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 
 function RequireAuth({ children }) {
   const { user, loading } = useAuth();
   if (loading) return null;
-  return user ? children : <Navigate to="/login" replace />;
+  return user ? <Layout>{children}</Layout> : <Navigate to="/login" replace />;
 }
 
 function RedirectIfAuth({ children }) {
@@ -35,7 +36,6 @@ export default function App() {
             </RequireAuth>
           }
         />
-        {/* Role-specific dashboards — implemented in F11–F14 */}
         <Route path="/dashboard/*" element={<RequireAuth><Dashboard /></RequireAuth>} />
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
