@@ -30,6 +30,34 @@ function formatDate(iso) {
   return new Date(iso).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
+function timeAgo(iso) {
+  const diff = Math.floor((Date.now() - new Date(iso)) / 1000);
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
+}
+
+const ACTION_ICONS = {
+  created:          { icon: '✦', color: '#6366F1' },
+  status_changed:   { icon: '⟳', color: '#0EA5E9' },
+  assigned:         { icon: '→', color: '#8B5CF6' },
+  unassigned:       { icon: '↩', color: '#94A3B8' },
+  priority_changed: { icon: '⚑', color: '#D97706' },
+  comment_added:    { icon: '💬', color: '#16A34A' },
+  resolved:         { icon: '✓', color: '#16A34A' },
+};
+
+const ACTION_LABELS = {
+  created:          'created this ticket',
+  status_changed:   'changed status',
+  assigned:         'assigned to',
+  unassigned:       'removed assignment',
+  priority_changed: 'changed priority',
+  comment_added:    'added a comment',
+  resolved:         'resolved this ticket',
+};
+
 export default function TicketDetail() {
   const { id } = useParams();
   const { user } = useAuth();
@@ -37,6 +65,7 @@ export default function TicketDetail() {
 
   const [ticket, setTicket] = useState(null);
   const [comments, setComments] = useState([]);
+  const [activity, setActivity] = useState([]);
   const [loading, setLoading] = useState(true);
   const [technicians, setTechnicians] = useState([]);
 
@@ -52,9 +81,11 @@ export default function TicketDetail() {
     Promise.all([
       getTicket(id),
       api.get(`/tickets/${id}/comments/`),
-    ]).then(([t, c]) => {
+      api.get(`/tickets/${id}/activity/`),
+    ]).then(([t, c, a]) => {
       setTicket(t.data);
       setComments(c.data);
+      setActivity(a.data);
     }).finally(() => setLoading(false));
 
     if (canAssign) {
@@ -84,6 +115,8 @@ export default function TicketDetail() {
       setComments(c => [...c, data]);
       setCommentBody('');
       setIsInternal(false);
+      const { data: newActivity } = await api.get(`/tickets/${id}/activity/`);
+      setActivity(newActivity);
     } finally {
       setSubmittingComment(false);
     }
@@ -112,6 +145,30 @@ export default function TicketDetail() {
             <div className={styles.divider} />
             <p className={styles.description}>{ticket.description}</p>
           </div>
+
+          {/* Activity timeline */}
+          {activity.length > 0 && (
+            <div className={styles.card}>
+              <h2 className={styles.sectionTitle}>Activity</h2>
+              <div className={styles.timeline}>
+                {activity.map((a, i) => {
+                  const cfg = ACTION_ICONS[a.action] || { icon: '·', color: '#94A3B8' };
+                  return (
+                    <div key={a.id} className={styles.timelineItem}>
+                      <div className={styles.timelineDot} style={{ background: cfg.color }}>{cfg.icon}</div>
+                      {i < activity.length - 1 && <div className={styles.timelineLine} />}
+                      <div className={styles.timelineContent}>
+                        <span className={styles.timelineActor}>{a.actor_name}</span>
+                        {' '}{ACTION_LABELS[a.action] || a.action}
+                        {a.detail && <span className={styles.timelineDetail}> {a.detail}</span>}
+                        <span className={styles.timelineTime}>{timeAgo(a.created_at)}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Comments */}
           <div className={styles.card}>

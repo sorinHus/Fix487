@@ -89,13 +89,31 @@ class TicketCreateSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
+        from . import activity as act
         validated_data['created_by'] = self.context['request'].user
         company = validated_data.get('company')
         priority = validated_data.get('priority', 'medium')
         if company and not validated_data.get('due_date'):
             hours = getattr(company, SLA_RESOLUTION_MAP.get(priority, 'sla_resolution_medium'), 72)
             validated_data['due_date'] = timezone.now() + timedelta(hours=hours)
-        return super().create(validated_data)
+        ticket = super().create(validated_data)
+        act.log_created(ticket, ticket.created_by)
+        return ticket
+
+
+class TicketActivitySerializer(serializers.ModelSerializer):
+    actor_name = serializers.SerializerMethodField()
+
+    class Meta:
+        from .models import TicketActivity
+        model = TicketActivity
+        fields = ['id', 'action', 'detail', 'actor_name', 'created_at']
+
+    def get_actor_name(self, obj):
+        if not obj.actor:
+            return 'System'
+        name = f'{obj.actor.first_name} {obj.actor.last_name}'.strip()
+        return name or obj.actor.username
 
 
 class TicketCommentSerializer(serializers.ModelSerializer):

@@ -98,3 +98,26 @@ class TimeLog(models.Model):
 
     def __str__(self):
         return f'Timelog by {self.technician} on #{self.ticket_id}'
+
+
+class TicketActivity(models.Model):
+    class Action(models.TextChoices):
+        CREATED          = 'created',          'Created'
+        STATUS_CHANGED   = 'status_changed',   'Status changed'
+        ASSIGNED         = 'assigned',         'Assigned'
+        UNASSIGNED       = 'unassigned',       'Unassigned'
+        PRIORITY_CHANGED = 'priority_changed', 'Priority changed'
+        COMMENT_ADDED    = 'comment_added',    'Comment added'
+        RESOLVED         = 'resolved',         'Resolved'
+
+    ticket     = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='activities')
+    actor      = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='activities')
+    action     = models.CharField(max_length=30, choices=Action.choices)
+    detail     = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.action} on #{self.ticket_id}'
