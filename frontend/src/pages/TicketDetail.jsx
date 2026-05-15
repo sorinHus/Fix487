@@ -30,6 +30,15 @@ function formatDate(iso) {
   return new Date(iso).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
+function formatDuration(minutes) {
+  if (!minutes) return '—';
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (h === 0) return `${m}m`;
+  if (m === 0) return `${h}h`;
+  return `${h}h ${m}m`;
+}
+
 function timeAgo(iso) {
   const diff = Math.floor((Date.now() - new Date(iso)) / 1000);
   if (diff < 60) return 'just now';
@@ -73,19 +82,27 @@ export default function TicketDetail() {
   const [isInternal, setIsInternal] = useState(false);
   const [submittingComment, setSubmittingComment] = useState(false);
 
-  const canEdit = ['admin', 'dispatcher'].includes(user?.role);
+  const [timelogs, setTimelogs] = useState([]);
+  const [showTimeForm, setShowTimeForm] = useState(false);
+  const [timeForm, setTimeForm] = useState({ started_at: '', ended_at: '', notes: '' });
+  const [submittingTime, setSubmittingTime] = useState(false);
+
+  const canEdit    = ['admin', 'dispatcher'].includes(user?.role);
   const canComment = true;
-  const canAssign = ['admin', 'dispatcher'].includes(user?.role);
+  const canAssign  = ['admin', 'dispatcher'].includes(user?.role);
+  const canLogTime = ['admin', 'technician'].includes(user?.role);
 
   useEffect(() => {
     Promise.all([
       getTicket(id),
       api.get(`/tickets/${id}/comments/`),
       api.get(`/tickets/${id}/activity/`),
-    ]).then(([t, c, a]) => {
+      api.get(`/tickets/${id}/timelogs/`),
+    ]).then(([t, c, a, tl]) => {
       setTicket(t.data);
       setComments(c.data);
       setActivity(a.data);
+      setTimelogs(tl.data);
     }).finally(() => setLoading(false));
 
     if (canAssign) {
@@ -104,6 +121,23 @@ export default function TicketDetail() {
     const assigned = val ? Number(val) : null;
     setTicket(t => ({ ...t, assigned_to: assigned }));
     await updateTicket(id, { assigned_to: assigned });
+  };
+
+  const submitTimeLog = async (e) => {
+    e.preventDefault();
+    setSubmittingTime(true);
+    try {
+      const { data } = await api.post(`/tickets/${id}/timelogs/`, {
+        started_at: timeForm.started_at,
+        ended_at:   timeForm.ended_at || null,
+        notes:      timeForm.notes,
+      });
+      setTimelogs(tl => [...tl, data]);
+      setShowTimeForm(false);
+      setTimeForm({ started_at: '', ended_at: '', notes: '' });
+    } finally {
+      setSubmittingTime(false);
+    }
   };
 
   const submitComment = async (e) => {
@@ -169,6 +203,92 @@ export default function TicketDetail() {
               </div>
             </div>
           )}
+
+          {/* Time Logs */}
+          {(timelogs.length > 0 || canLogTime) && (() => {
+            const totalMinutes = timelogs.reduce((s, tl) => s + (tl.duration_minutes || 0), 0);
+            const durationPreview = (() => {
+              if (!timeForm.started_at || !timeForm.ended_at) return null;
+              const diff = new Date(timeForm.ended_at) - new Date(timeForm.started_at);
+              return diff > 0 ? Math.floor(diff / 60000) : null;
+            })();
+            return (
+              <div className={styles.card}>
+                <div className={styles.timelogHeader}>
+                  <h2 className={styles.sectionTitle}>
+                    Time Logged
+                    {totalMinutes > 0 && (
+                      <span className={styles.totalTime}>{formatDuration(totalMinutes)} total</span>
+                    )}
+                  </h2>
+                  {canLogTime && !showTimeForm && (
+                    <button className={styles.btnSecondary} onClick={() => setShowTimeForm(true)}>+ Log Time</button>
+                  )}
+                </div>
+
+                {timelogs.length === 0 && !showTimeForm && (
+                  <p className={styles.empty}>No time logged yet.</p>
+                )}
+
+                {timelogs.length > 0 && (
+                  <div className={styles.timelogList}>
+                    {timelogs.map(tl => (
+                      <div key={tl.id} className={styles.timelogItem}>
+                        <div className={styles.timelogMeta}>
+                          <strong>{tl.technician_name}</strong>
+                          <span className={styles.timelogDuration}>{formatDuration(tl.duration_minutes)}</span>
+                          <span className={styles.timelogDate}>{formatDate(tl.started_at)}</span>
+                        </div>
+                        {tl.notes && <p className={styles.timelogNotes}>{tl.notes}</p>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {showTimeForm && (
+                  <form onSubmit={submitTimeLog} className={styles.timeForm}>
+                    <div className={styles.timeRow}>
+                      <label className={styles.formLabel}>
+                        Started at
+                        <input
+                          type="datetime-local"
+                          className={styles.timeInput}
+                          value={timeForm.started_at}
+                          onChange={e => setTimeForm(f => ({ ...f, started_at: e.target.value }))}
+                          required
+                        />
+                      </label>
+                      <label className={styles.formLabel}>
+                        Ended at
+                        <input
+                          type="datetime-local"
+                          className={styles.timeInput}
+                          value={timeForm.ended_at}
+                          onChange={e => setTimeForm(f => ({ ...f, ended_at: e.target.value }))}
+                        />
+                      </label>
+                    </div>
+                    {durationPreview && (
+                      <p className={styles.durationPreview}>Duration: {formatDuration(durationPreview)}</p>
+                    )}
+                    <textarea
+                      className={styles.textarea}
+                      placeholder="Notes (optional)…"
+                      value={timeForm.notes}
+                      onChange={e => setTimeForm(f => ({ ...f, notes: e.target.value }))}
+                      rows={2}
+                    />
+                    <div className={styles.timeFormActions}>
+                      <button type="button" className={styles.btnSecondary} onClick={() => setShowTimeForm(false)}>Cancel</button>
+                      <button type="submit" className={styles.btnPrimary} disabled={submittingTime}>
+                        {submittingTime ? 'Saving…' : 'Save'}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            );
+          })()}
 
           {/* Comments */}
           <div className={styles.card}>

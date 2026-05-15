@@ -141,9 +141,15 @@ class NotificationSerializer(serializers.ModelSerializer):
 
 
 class TimeLogSerializer(serializers.ModelSerializer):
+    technician_name = serializers.SerializerMethodField()
+
     class Meta:
         model = TimeLog
-        fields = ['id', 'started_at', 'ended_at', 'duration_minutes', 'notes']
+        fields = ['id', 'started_at', 'ended_at', 'duration_minutes', 'notes', 'technician_name']
+
+    def get_technician_name(self, obj):
+        name = f'{obj.technician.first_name} {obj.technician.last_name}'.strip()
+        return name or obj.technician.username
 
     def create(self, validated_data):
         validated_data['technician'] = self.context['request'].user
