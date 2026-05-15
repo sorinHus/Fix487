@@ -1,0 +1,50 @@
+.page { display: flex; flex-direction: column; gap: var(--space-6); }
+.header { display: flex; flex-direction: column; gap: var(--space-1); }
+.title { font-size: 24px; font-weight: 700; color: var(--color-text); margin: 0; }
+.subtitle { font-size: 13px; color: var(--color-text-muted); margin: 0; }
+.loading { padding: var(--space-10); text-align: center; color: var(--color-text-muted); }
+
+/* Stat cards */
+.statGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--space-4); }
+.statCard {
+  background: var(--color-white); border-radius: var(--radius-xl); padding: var(--space-5);
+  box-shadow: var(--shadow); display: flex; flex-direction: column; gap: var(--space-1);
+  border-top: 4px solid transparent;
+}
+.statValue { font-size: 32px; font-weight: 800; line-height: 1; }
+.statLabel { font-size: 13px; font-weight: 500; color: var(--color-text-secondary); }
+
+.primary  { border-top-color: var(--color-primary); }
+.primary .statValue  { color: var(--color-primary); }
+.warning  { border-top-color: var(--color-warning); }
+.warning .statValue  { color: var(--color-warning); }
+.success  { border-top-color: var(--color-success); }
+.success .statValue  { color: var(--color-success); }
+.danger   { border-top-color: var(--color-danger); }
+.danger .statValue   { color: var(--color-danger); }
+.info     { border-top-color: var(--color-info); }
+.info .statValue     { color: var(--color-info); }
+
+/* Charts */
+.chartsRow { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--space-5); }
+
+.card { background: var(--color-white); border-radius: var(--radius-xl); box-shadow: var(--shadow); padding: var(--space-6); }
+.cardTitle { font-size: 15px; font-weight: 700; color: var(--color-text); margin: 0 0 var(--space-5); }
+
+/* Bar chart */
+.barChart { display: flex; flex-direction: column; gap: var(--space-3); }
+.barRow { display: grid; grid-template-columns: 110px 1fr 32px; align-items: center; gap: var(--space-3); }
+.barLabel { font-size: 13px; color: var(--color-text-secondary); font-weight: 500; text-align: right; }
+.barTrack { height: 10px; background: var(--color-bg-secondary); border-radius: var(--radius-full); overflow: hidden; }
+.barFill { height: 100%; border-radius: var(--radius-full); transition: width 0.4s ease; }
+.barCount { font-size: 13px; font-weight: 700; color: var(--color-text); text-align: right; }
+
+/* Technician table */
+.table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.table th { padding: 10px 14px; text-align: left; font-size: 12px; font-weight: 600; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.4px; border-bottom: 1px solid var(--color-border); }
+.table td { padding: 12px 14px; border-bottom: 1px solid var(--color-border); color: var(--color-text); }
+.table tr:last-child td { border-bottom: none; }
+.table tbody tr:hover { background: var(--color-bg); }
+.techName { font-weight: 600; }
+.resolved { color: var(--color-success); font-weight: 600; }
+.critical { color: var(--color-danger); font-weight: 600; }
