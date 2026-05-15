@@ -9,7 +9,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'fix487.settings')
 django.setup()
 
 from accounts.models import Company, User
-from tickets.models import Category
+from tickets.models import Category, Ticket
 
 
 def seed_companies():
@@ -129,6 +129,92 @@ def seed_categories():
     ]
     for name in categories:
         Category.objects.get_or_create(name=name)
+    return {c.name: c for c in Category.objects.all()}
+
+
+def seed_tickets(companies, categories):
+    admin = User.objects.filter(is_superuser=True).first()
+    tech1 = User.objects.filter(username='tech1').first()
+    tech2 = User.objects.filter(username='tech2').first()
+    client_acme = User.objects.filter(username='client_acme').first()
+    client_globex = User.objects.filter(username='client_globex').first()
+
+    acme = companies.get('Acme Corp')
+    globex = companies.get('Globex Solutions')
+    initech = companies.get('Initech Ltd')
+
+    tickets = [
+        {
+            'title': 'Laptop won\'t boot after Windows update',
+            'description': 'After the latest Windows 11 update, the laptop gets stuck on the loading screen and cannot boot into the OS.',
+            'status': 'new', 'priority': 'high',
+            'category': categories.get('Software'),
+            'company': acme, 'created_by': client_acme or admin,
+        },
+        {
+            'title': 'Office printer offline — floor 3',
+            'description': 'The HP LaserJet on floor 3 shows as offline on all workstations. Restarting the printer did not help.',
+            'status': 'assigned', 'priority': 'medium',
+            'category': categories.get('Printer & Peripherals'),
+            'company': acme, 'created_by': client_acme or admin,
+            'assigned_to': tech1,
+        },
+        {
+            'title': 'VPN connection drops every 30 minutes',
+            'description': 'Remote workers report that the VPN disconnects every 30 minutes and requires manual reconnection.',
+            'status': 'in_progress', 'priority': 'high',
+            'category': categories.get('Network'),
+            'company': globex, 'created_by': client_globex or admin,
+            'assigned_to': tech2,
+        },
+        {
+            'title': 'New employee account setup — Maria Nica',
+            'description': 'Please create AD account, email, and grant access to shared drives for new hire starting Monday.',
+            'status': 'in_progress', 'priority': 'medium',
+            'category': categories.get('Access & Permissions'),
+            'company': globex, 'created_by': client_globex or admin,
+            'assigned_to': tech1,
+        },
+        {
+            'title': 'Outlook not syncing with Exchange server',
+            'description': 'Three users in the finance department cannot send or receive emails since this morning.',
+            'status': 'on_hold', 'priority': 'critical',
+            'category': categories.get('Email & Communication'),
+            'company': initech, 'created_by': admin,
+            'assigned_to': tech2,
+        },
+        {
+            'title': 'Workstation RAM upgrade — accounting dept',
+            'description': 'Accounting workstations running slow. Requesting RAM upgrade from 8GB to 16GB on 5 machines.',
+            'status': 'resolved', 'priority': 'low',
+            'category': categories.get('Hardware'),
+            'company': acme, 'created_by': client_acme or admin,
+            'assigned_to': tech1,
+        },
+        {
+            'title': 'Suspicious login attempts detected',
+            'description': 'Azure AD flagged multiple failed login attempts on the CFO\'s account from an unknown IP.',
+            'status': 'resolved', 'priority': 'critical',
+            'category': categories.get('Security'),
+            'company': globex, 'created_by': admin,
+            'assigned_to': tech2,
+        },
+        {
+            'title': 'WiFi signal weak in conference rooms B2 and B3',
+            'description': 'Employees in conference rooms B2 and B3 report very weak WiFi. Video calls drop frequently.',
+            'status': 'closed', 'priority': 'medium',
+            'category': categories.get('Network'),
+            'company': initech, 'created_by': admin,
+            'assigned_to': tech1,
+        },
+    ]
+
+    count = 0
+    for data in tickets:
+        if not Ticket.objects.filter(title=data['title']).exists():
+            Ticket.objects.create(**data)
+            count += 1
+    return count
 
 
 if __name__ == '__main__':
@@ -141,7 +227,11 @@ if __name__ == '__main__':
     print('  Users ready.')
 
     print('Seeding ticket categories...')
-    seed_categories()
+    categories = seed_categories()
     print('  Categories ready.')
+
+    print('Seeding tickets...')
+    count = seed_tickets(companies, categories)
+    print(f'  {count} tickets created.')
 
     print('Done.')
