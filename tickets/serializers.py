@@ -1,5 +1,14 @@
 from rest_framework import serializers
+from django.utils import timezone
+from datetime import timedelta
 from .models import Ticket, Category, TicketComment, TimeLog
+
+SLA_RESOLUTION_MAP = {
+    'critical': 'sla_resolution_critical',
+    'high':     'sla_resolution_high',
+    'medium':   'sla_resolution_medium',
+    'low':      'sla_resolution_low',
+}
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -13,6 +22,7 @@ class TicketListSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.name', read_only=True, default=None)
     assigned_to_name = serializers.SerializerMethodField()
     created_by_name = serializers.SerializerMethodField()
+    sla_remaining_hours = serializers.SerializerMethodField()
 
     class Meta:
         model = Ticket
@@ -20,8 +30,15 @@ class TicketListSerializer(serializers.ModelSerializer):
             'id', 'title', 'status', 'priority',
             'category_name', 'company_name',
             'assigned_to_name', 'created_by_name',
-            'sla_breach', 'created_at', 'updated_at',
+            'sla_breach', 'due_date', 'sla_remaining_hours',
+            'created_at', 'updated_at',
         ]
+
+    def get_sla_remaining_hours(self, obj):
+        if not obj.due_date or obj.status in ('resolved', 'closed'):
+            return None
+        delta = obj.due_date - timezone.now()
+        return round(delta.total_seconds() / 3600, 1)
 
     def get_assigned_to_name(self, obj):
         if not obj.assigned_to:
@@ -73,6 +90,11 @@ class TicketCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data['created_by'] = self.context['request'].user
+        company = validated_data.get('company')
+        priority = validated_data.get('priority', 'medium')
+        if company and not validated_data.get('due_date'):
+            hours = getattr(company, SLA_RESOLUTION_MAP.get(priority, 'sla_resolution_medium'), 72)
+            validated_data['due_date'] = timezone.now() + timedelta(hours=hours)
         return super().create(validated_data)
 
 

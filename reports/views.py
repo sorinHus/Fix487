@@ -1,12 +1,13 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Count, Avg, F, ExpressionWrapper, DurationField
+from django.db.models import Count, F
 from django.utils import timezone
 from datetime import timedelta
 
 from tickets.models import Ticket
-from accounts.models import User
+from accounts.models import User, Company
+from knowledge.models import KBArticle
 
 
 class SummaryReportView(APIView):
@@ -16,41 +17,37 @@ class SummaryReportView(APIView):
         user = request.user
         qs = self._base_qs(user)
         today = timezone.now().date()
+        open_statuses = ['new', 'assigned', 'in_progress', 'on_hold']
 
-        by_status = (
-            qs.values('status')
-            .annotate(count=Count('id'))
-            .order_by('status')
-        )
-        by_priority = (
-            qs.values('priority')
-            .annotate(count=Count('id'))
-            .order_by('priority')
-        )
-        by_category = (
+        by_status = list(qs.values('status').annotate(count=Count('id')).order_by('status'))
+        by_priority = list(qs.values('priority').annotate(count=Count('id')).order_by('priority'))
+        by_category = list(
             qs.exclude(category=None)
             .values(name=F('category__name'))
             .annotate(count=Count('id'))
             .order_by('-count')[:6]
         )
 
-        open_statuses = ['new', 'assigned', 'in_progress', 'on_hold']
-        resolved_today = qs.filter(
-            status='resolved',
-            resolved_at__date=today,
-        ).count()
-        last_30 = qs.filter(created_at__gte=timezone.now() - timedelta(days=30)).count()
-
-        return Response({
+        data = {
             'total': qs.count(),
             'open': qs.filter(status__in=open_statuses).count(),
-            'resolved_today': resolved_today,
+            'unassigned': qs.filter(status='new', assigned_to=None).count(),
+            'resolved_today': qs.filter(status='resolved', resolved_at__date=today).count(),
             'sla_breaches': qs.filter(sla_breach=True).count(),
-            'last_30_days': last_30,
-            'by_status': list(by_status),
-            'by_priority': list(by_priority),
-            'by_category': list(by_category),
-        })
+            'last_30_days': qs.filter(created_at__gte=timezone.now() - timedelta(days=30)).count(),
+            'by_status': by_status,
+            'by_priority': by_priority,
+            'by_category': by_category,
+        }
+
+        # Admin-only global counters
+        if user.role in ('admin', 'dispatcher'):
+            data['active_technicians'] = User.objects.filter(role='technician', is_active=True).count()
+        if user.role == 'admin':
+            data['companies'] = Company.objects.filter(is_active=True).count()
+            data['kb_articles'] = KBArticle.objects.filter(is_published=True).count()
+
+        return Response(data)
 
     def _base_qs(self, user):
         qs = Ticket.objects.all()

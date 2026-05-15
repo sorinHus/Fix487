@@ -23,6 +23,15 @@ function formatDate(iso) {
   return new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
+function SlaBadge({ hours, breach }) {
+  if (breach) return <span className={`${styles.slaBadge} ${styles.slaBreached}`}>SLA breached</span>;
+  if (hours === null || hours === undefined) return null;
+  if (hours <= 0) return <span className={`${styles.slaBadge} ${styles.slaBreached}`}>Overdue</span>;
+  if (hours <= 4) return <span className={`${styles.slaBadge} ${styles.slaCritical}`}>{hours.toFixed(1)}h left</span>;
+  if (hours <= 24) return <span className={`${styles.slaBadge} ${styles.slaWarning}`}>{Math.round(hours)}h left</span>;
+  return <span className={`${styles.slaBadge} ${styles.slaOk}`}>{Math.round(hours)}h left</span>;
+}
+
 const EMPTY_FORM = { title: '', description: '', priority: 'medium', category: '', company: '' };
 
 export default function Tickets() {
@@ -130,6 +139,7 @@ export default function Tickets() {
                 <th>Title</th>
                 <th>Status</th>
                 <th>Priority</th>
+                <th>SLA</th>
                 <th>Category</th>
                 <th>Company</th>
                 <th>Assigned to</th>
@@ -143,6 +153,7 @@ export default function Tickets() {
                   <td className={styles.ticketTitle}>{t.title}</td>
                   <td><StatusBadge status={t.status} /></td>
                   <td><PriorityBadge priority={t.priority} /></td>
+                  <td><SlaBadge hours={t.sla_remaining_hours} breach={t.sla_breach} /></td>
                   <td>{t.category_name || '—'}</td>
                   <td>{t.company_name}</td>
                   <td>{t.assigned_to_name || <span className={styles.unassigned}>Unassigned</span>}</td>
