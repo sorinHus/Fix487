@@ -131,7 +131,6 @@ VITE_API_URL=http://localhost:8000
 
 | Username | Password | Role |
 |----------|----------|------|
-| sorin487 | Admin2026! | Admin |
 | alex.dispatcher | Dispatch2026! | Dispatcher |
 | mihai.tech | Tech2026! | Technician |
 | ana.tech | Tech2026! | Technician |
